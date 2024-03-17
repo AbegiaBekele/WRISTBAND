@@ -1,0 +1,126 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+using Twilio;
+using Twilio.Rest.Api.V2010.Account;
+
+namespace WristbandAlertSystem
+{
+    public class Wristband
+    {
+        public double Temperature { get; set; }
+        public int OxygenLevel { get; set; }
+        public int PulseRate { get; set; }
+    }
+
+    public class HomeController : Controller
+    {
+        private const string TWILIO_ACCOUNT_SID = "AC44c0084cbaad95a2384e0d473f639c0b";
+        private const string TWILIO_AUTH_TOKEN = "d60871906d886611ad3c7c523cb41bdb";
+        private const string TWILIO_PHONE_NUMBER = "+18583467844";
+        private const string RECIPIENT_PHONE_NUMBER = "+48576226010";
+
+        private static readonly Dictionary<string, string> LOGIN_CREDENTIALS = new Dictionary<string, string>
+        {
+            {"abegiabekele", "21543825"}
+        };
+
+        public ActionResult Index()
+        {
+            if (Session["logged_in"] != null && (bool)Session["logged_in"])
+            {
+                var wristband = new Wristband();
+                return View("Index", wristband);
+            }
+            else
+            {
+                return RedirectToAction("Login");
+            }
+        }
+
+        public ActionResult Login()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public ActionResult Login(string username, string password)
+        {
+            if (LOGIN_CREDENTIALS.ContainsKey(username) && LOGIN_CREDENTIALS[username] == password)
+            {
+                Session["logged_in"] = true;
+                return RedirectToAction("Index");
+            }
+            else
+            {
+                ViewBag.Error = "Invalid credentials";
+                return View();
+            }
+        }
+
+        public ActionResult Logout()
+        {
+            Session["logged_in"] = null;
+            return RedirectToAction("Index");
+        }
+
+        public ActionResult GetWristbandData()
+        {
+            if (Session["logged_in"] != null && (bool)Session["logged_in"])
+            {
+                var wristband = new Wristband
+                {
+                    Temperature = 41.2,
+                    OxygenLevel = 90,
+                    PulseRate = 85
+                };
+
+                if (wristband.Temperature > 40)
+                {
+                    Report("Temperature is above 40°C!");
+                }
+                if (wristband.OxygenLevel < 92)
+                {
+                    Report("Oxygen level is below 92%!");
+                }
+                if (wristband.PulseRate > 80)
+                {
+                    Report("Pulse rate is above 80 BPM!");
+                }
+
+                return View("Index", wristband);
+            }
+            else
+            {
+                return RedirectToAction("Login");
+            }
+        }
+
+        private void Report(string message)
+        {
+            SendSmsAlert(message);
+        }
+
+        private void SendSmsAlert(string message)
+        {
+            TwilioClient.Init(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
+
+            try
+            {
+                var messageOptions = new CreateMessageOptions(new Twilio.Types.PhoneNumber(RECIPIENT_PHONE_NUMBER))
+                {
+                    From = new Twilio.Types.PhoneNumber(TWILIO_PHONE_NUMBER),
+                    Body = message
+                };
+                var messageResult = MessageResource.Create(messageOptions);
+                Console.WriteLine("SMS Alert Sent Successfully!");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Failed to send SMS alert: {e.Message}");
+            }
+        }
+    }
+}
