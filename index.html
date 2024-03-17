@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wristband Data</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            text-align: center;
+        }
+
+        .data {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Wristband Data</h1>
+        <div class="data">
+            <h2>Temperature: {{ wristband.temperature }}°C</h2>
+            <h2>Oxygen Level: {{ wristband.oxygen_level }}%</h2>
+            <h2>Pulse Rate: {{ wristband.pulse_rate }} BPM</h2>
+        </div>
+        <form action="{{ url_for('get_wristband_data') }}" method="GET">
+            <button type="submit">Get Wristband Data</button>
+        </form>
+        <form action="{{ url_for('logout') }}" method="POST">
+            <button type="submit">Logout</button>
+        </form>
+    </div>
+</body>
+</html>
